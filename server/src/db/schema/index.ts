@@ -1,4 +1,4 @@
-// Barrel file — concept where there is a file, such as the index, that exports all the files within this folder
+// Barrel file — concept where there is a file, such as the index, that exports all the files within its folder
 
 import { rooms } from "./rooms.ts";
 
