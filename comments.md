@@ -180,5 +180,12 @@ and use it on connection.sql creation
 executed SQL, which we will then execute the npx drizzle-kit migrate to run this sql
 ○ Finally, execute npx drizzle-kit studio to visualize the database on a browser
 
-○ Install drizzle-seed for creating database seeds
+○ Install drizzle-seed for creating database seeds.
 ■ When Seeding we usually reset the database before seeding, and drizzle-seed offers us functions to seed and reset.
+■ Add script in package.json to run it
+
+● Routes
+○ Create a src/http/routes/ folder and inside of it, create all the endpoints we want to be accessed via rest application
+○ Import FastifyPluginCallbackZod to type routes (e.g. getRoomsRoute). This function receives the `app` instance, register
+the endpoint, and defines a callback that returns the desired response.
+○ We now need to register, inside app in our server.ts, the app the routes we create

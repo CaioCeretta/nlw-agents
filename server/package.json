@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "node --experimental-strip-types --env-file .env --no-warnings --watch src/server.ts",
-    "start": "node --experimental-strip-types --env-file .env --no-warnings src/server.ts"
+    "start": "node --experimental-strip-types --env-file .env --no-warnings src/server.ts",
+    "db-seed": "node --experimental-strip-types --env-file .env --no-warnings src/db/seed.ts"
   },
   "keywords": [],
   "author": "",
