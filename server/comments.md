@@ -242,3 +242,68 @@ a room created (e.g. @roomId = {{createRoom.response.body.$.roomId}})
   ■ the second parameter is the schema object, and the roomId as the parameter
   ■ The third parameter we can get the roomId from the previous step in the request object (thanks to zod)
   and use it to fetch the specific room in the database.
+
+
+● SQL Comments: 
+
+  ○ SQL left join: 
+
+    ```ts
+    export const getRoomsRoute: FastifyPluginCallbackZod = (app) => {
+      app.get("/rooms", async () => {
+        const results = await db
+          .select({
+            id: schema.rooms.id,
+            name: schema.rooms.name,
+            createdAt: schema.rooms.createdAt,
+            questionsCount: count(schema.questions.id),
+          })
+          .from(schema.rooms)
+          .leftJoin(schema.questions, eq(schema.questions.roomId, schema.rooms.id))
+          .groupBy(schema.rooms.id)
+          .orderBy(schema.rooms.createdAt);
+
+        return results;
+	});
+  ```
+
+  Using this query as an example
+
+  ■ What we want? 
+    □ Fetch all rooms from the rooms table
+    □ Along with it, to know how many `questions` (from question table), each room has
+    □ Even if a room does not have any question, it should still appear in the result
+    □ That's why we use LEFT JOIN instead of INNER JOIN
+
+  ■ Table Structure
+
+    □ Simplified Table Structure Example
+
+      rooms
+      id: 1  |  name: room 1  | createdAt: 2024-07-01 10:00
+      id: 2  |  name: room 2  | createdAt: 2024-07-01 11:00
+      id: 3  |  name: room 3  | createdAt: 2024-07-01 12:00
+
+      _____________________________________________________
+
+      questions
+
+      id: 1  |  question: What is react?  | answer: null | roomId: 1
+      id: 2  |  question: What is SQL?    | answer: null | roomId: 1
+      id: 3  |  question: What is JSON?   | answer: null | roomId: 2
+
+      . Room with the id 3 does't have any question
+
+  ■ What does this snippet do
+
+    □ select(): defines which fields we want in the result
+    □ from(schema.rooms): starts by fetching the rooms
+    □ leftJoin(...): joins with the `questions` table, if present. if not, it will set null
+    □ count(schema.questions.id): Counts how many questions there are per room (even if it's 0)
+    □ groupBy(schema.rooms.id): Groups the results by room, to count correctly
+    □ orderBy(schema.rooms.createdAt): Orders it by room date creation
+
+ 
+
+      
+
