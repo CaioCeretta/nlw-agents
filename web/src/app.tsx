@@ -11,7 +11,7 @@ export function App() {
       <BrowserRouter>
         <Routes>
           <Route element={<CreateRoom />} index />
-          <Route element={<Room />} path="/room/:roomId" />
+          <Route element={<Room />} path="/rooms/:roomId" />
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>
