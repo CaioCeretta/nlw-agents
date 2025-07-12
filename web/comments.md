@@ -60,7 +60,7 @@ such as getter and setter that give access to an attribute
 
 ○ Add shadcn and add its dark class in index.html html tag
 
-○ We make API requests in a react application through @tanstack/react-query, here's how it goes:
+○ We make API get requests in a react application through @tanstack/react-query, here's how it goes:
 
    1. Create a react-query client, wrap the whole application inside a QueryClient, and use it on the client prop
    2. Tanstack useQuery: It is a function that has 2 required parameters
@@ -78,7 +78,39 @@ such as getter and setter that give access to an attribute
   we can receive, so we create a type for RoomParams, and simply say the name of the param we will receive and type
   useParam<RoomParam>. The id can still be undefined because the user can delete the param from the url, so is always
   a good approach to check if the param exist
-     
+
+○ React Query provides the useMutation hook to deal with operations that modify data, such as creating, updating, or
+deleting resources. In this case, it's used to send form data to the backend when a user submits the room creation form.
+
+  ■ Mutation definition
+
+    □ The object passed to useMutation includes the following configuration:
+ 
+      - mutationFn: An asynchronous function that runs when the mutation is triggered (e.g., on form submission).
+      – This function receives data shaped as CreateRoomRequest, containing name and description.
+      – Sends a POST request to http://localhost:3333/rooms with a JSON body.
+      – Awaits the response from the API, which returns a JSON containing the roomId.
+      – The result is typed as CreateRoomResponse.
+
+  ■ Method Invocation
+
+    □ After its implementation, we call it inside the form component where we want to implement it
+    □ useCreateRoom will return us a function named useMutateAsync(), this is the function that will trigger our mutation
+    function, which is the function that performs the http call. After assigning it to a constant, we rename it to a name
+    related to its behavior on the code (such as createRoom)
+    □ Now, we simply modify the function useForm that RHF uses to submit the form, for the mutation function
+
+    □ The creation works, but the list on the right is not updated, why?
+
+      . When the useRooms call to list all the rooms was made, we chose a queryKey for useQuery
+      . We can use this id on a property named on useMutation's onSuccess parameter.
+      . This parameter fn is triggered whenever the mutationFn returns a success
+      . For it, we assign to a constant, the useQueryClient from react-query, and use this queryClient to invalidate the
+      key used in the get-room queryKey inside that API Call
+      . By invalidating a call, it will 'redo' the queries with that queryKey that are on screen
+
+
+
 
 ○ src/http folder 
 
