@@ -80,3 +80,48 @@ such as getter and setter that give access to an attribute
   a good approach to check if the param exist
      
 
+○ src/http folder 
+
+  ■ One thing the instructor likes to do to keep the code organized, is to create a types folder inside http to share it
+  across the application
+  ■ Thus folder also includes the `useQuery`s used to fetch data from the API, where it works similar to a context, where
+  we utilize the use keyword as prefix, such as useRooms for the function that retrieves the db data, where we are able
+  to get all the tanstack responses — such as data, isLoading, isError
+
+○ Shadcn Form
+
+  ■ We are used to utilize the RHF (React Hook Form) by calling its function and assigning to constants the variables
+  it contains, such as formState, Control, register, etc. However, shadcn, on the Form component, when using rhf, since
+  it receives the full form component, we must not destructure it, instead we must assign the result of the useForm to a
+  constant and spread it on the <Form {...constantNameChosenForTheForm}>... and within the Form, we use the regular HTML
+  form. which would require, on the submit action something like `onSubmit={createRoomForm.handleSubmit(handleCreateRoom)}`
+
+  TL;DR - We assign useForm return to a constant and spread it as prop to the shadcn Form
+
+  ● FormField — Assigning Form Fields in shadcn/ui
+
+  ○ Required properties for FormField
+
+    ■ control  
+      – Passed from useForm()  
+      – Connects the field to the form’s state  
+
+    ■ name  
+      – Must match the key in your Zod schema  
+      – Example: `name="name"` or `name="description"`
+
+    ■ render({ field })  
+      – Receives the field object  
+      – You usually spread ...field into the input
+
+      – What does `field` contain?  
+        • value: the current input value  
+        • onChange: updates the form state  
+        • onBlur: tracks focus loss  
+        • ref: React ref for accessibility
+
+      – shadcn/ui components used:
+        • FormItem — wraps field, label, and message  
+        • FormLabel — provides the label  
+        • FormControl — wraps the input  
+        • FormMessage — shows validation error
