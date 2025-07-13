@@ -1,20 +1,20 @@
-import { Bot, Loader2, MessageSquare } from 'lucide-react'
-import { Card, CardContent } from '@/components/ui/card'
-import { dayjs } from '@/lib/dayjs'
+import { Bot, Loader2, MessageSquare } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { dayjs } from "@/lib/dayjs";
 
 interface Question {
-  id: string
-  question: string
-  answer?: string | null
-  createdAt: string
+  id: string;
+  question: string;
+  answer?: string | null;
+  createdAt: string;
 }
 
 interface QuestionItemProps {
-  question: Question
+  question: Question;
 }
 
 export function QuestionItem({ question }: QuestionItemProps) {
-  const isGenerating = !question.answer
+  const isGenerating = !question.answer;
 
   return (
     <Card>
@@ -28,7 +28,7 @@ export function QuestionItem({ question }: QuestionItemProps) {
               </div>
             </div>
             <div className="flex-1">
-              <p className="mb-1 font-medium text-foreground">Pergunta</p>
+              <p className="mb-1 font-medium text-foreground">Question</p>
               <p className="whitespace-pre-line text-muted-foreground text-sm leading-relaxed">
                 {question.question}
               </p>
@@ -42,13 +42,13 @@ export function QuestionItem({ question }: QuestionItemProps) {
               </div>
             </div>
             <div className="flex-1">
-              <p className="mb-1 font-medium text-foreground">Resposta da IA</p>
+              <p className="mb-1 font-medium text-foreground">AI Anser</p>
               <div className="text-muted-foreground">
                 {isGenerating ? (
                   <div className="flex items-center space-x-2">
                     <Loader2 className="size-4 animate-spin text-primary" />
                     <span className="text-primary text-sm italic">
-                      Gerando resposta...
+                      Generating...
                     </span>
                   </div>
                 ) : (
@@ -68,5 +68,5 @@ export function QuestionItem({ question }: QuestionItemProps) {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
