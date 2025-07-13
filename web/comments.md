@@ -157,3 +157,63 @@ deleting resources. In this case, it's used to send form data to the backend whe
         • FormLabel — provides the label  
         • FormControl — wraps the input  
         • FormMessage — shows validation error
+
+○ Get Room Questions useQuery
+
+  ■ Unlike getRooms, the questions are dynamic and depend on the current room. When the room changes, the query must change
+  as well. Therefore, using the same `queryKey` identifier for all of them would cause issues. 
+  ■ Since `reactQuery` has a caching system that runs on memory, it means that if we access a room and fetch the questions
+  made on that room and then accessing other room, and executing the same query again and both of them having the same ID,
+  it will end up showing the questions fetched at the first room, in the second one, because since they have the same ID,
+  the answer is going to be cached.
+  ■ When there is a parameter (or more than one), where want to list the questions, as the queryFn second argument, we
+  also include the parameter into the queryKey value, e.g  `queryKey: ['get-questions', roomId]`. Now id is going to be
+  different for each room
+
+
+○ Question List Component
+
+  ■ Question list component holds all the questions inside a specific room
+  ■ We created the query to get the room questions on the previous step. The data returned by useQuery is going to be
+  assigned to a constant on that new file where we'll iterate over them, creating a question item for each one. Such
+  as `const { data } = useRoomQuestions(roomId);`
+
+
+○ Create Questions
+
+    ◆ Reminder  About typings:
+      . Always look forward to typing requests, responses, any typing. It will help us a lot when coding to know exactly
+      what the return and the response are going to be.
+  ■ Within the http folder we are going to have the types of requests and responses — responses are mainly typed after
+  the server API return. 
+  ■ We then create the mutation to send the function to the API endpoint, pretty much as the other one.
+
+○ Invalidating Query Keys
+
+  ■ We have previously seen that when a query key is invalidated, such as in an onSuccess, the queryFn is going to be remade.
+
+  ■ However, when mutating, we need to be careful because: 
+
+    □ By going into the use-rooms-questions, that is a request, we can notice that we have the roomId inside the query
+    key array
+    □ Different from the rooms key, where we invalidate the rooms fetch to fetch the new list, we now have a parameter
+    □ We receive the roomId as parameter, but is only available on the mutation function, it is not visible within the
+    onSuccess context  
+
+    One approach we can take to fix this: 
+
+    □ Before, the CreateQuestionRequest type includes the question and roomId as properties.
+
+    □ After in the CreateQuestionRequest type, instead of defining the roomId as part of the type, we specify that the question
+    will be included and the roomId will be passed as a parameter to useCreateQuestion function
+
+    □ By using this approach, roomId is going to be available throughout the entire function, making it accessible for use
+    inside revalidate
+
+    □ However, different from the other functions, this will involve us passing the room id when invoking that mutationFn
+    e.g `const { mutateAsync } = useCreateQuestion(roomId)` 
+
+    □ mutateAsync is not being directly exported anywhere. It is a property returned by the hook useCreateQuestion, which
+    internally, encapsulate the useMutation
+    
+
