@@ -249,7 +249,8 @@ deleting resources. In this case, it's used to send form data to the backend whe
 
   ■ First of all, we need to make sure that the browser can record audio
 
-  ■ Create a boolean state to track if to set the recording as true or false
+  ■ Next, we'll set a state variable (for example, isRecording) to true to indicate that recording has started. This can
+  be useful for managing UI elements, like showing a "Stop Recording" button.
 
   ■ We are going to monitor the audios being recorded in the AudioRecorder page through dev tools network tab
 
@@ -268,23 +269,60 @@ deleting resources. In this case, it's used to send form data to the backend whe
 
     □ We use the recorder  start recording. Recorder is a object of the type MediaRecorder
 
-    □ Break down step by step of the startRecording method
+    □ Recording Audio in the Browser: Step-by-Step Guide
 
-      1. check if the browser supports recording 
-      2. setIsRecording true
-      3. create an audio constant and assign to it the navigator.mediaDevices.getUserMedia return
-      4. This is required because we need to access the user's microphone, this function has one audio property
-      object, which has some properties:
-         . In this property we can add properties related to the recording, such as echoCancellation, noiseSuppression,
-         sample_rate and others
-      5. With the constant "in hands", we are going to start the recording, for it, we'll create a constant recorder that
-      is an instance of the MediaRecorder API (Which is global to he browser). This constructor receives properties like:
-        1. The audio object,
-        2. A mimeType (format that we want to record these audios, each mimeType has different sizes, different compression
-      levels, and other information)
-        3. audioBitsPerSecond - which a common value for this type of recordings is 64_000
-      6. Invoke the method recorder.ondataavailable, that means that when the user recorded an audio and it is available, 
-      we can use this callback, use an event parameter and check if event.data.size > 0
+    1. Check for Browser Compatibility
+   
+       - First, ensure the browser supports recording audio using the MediaRecorder API, which we have already done. The
+       browser must have access to the user's microphone, so we will check if navigator.mediaDevices.getUserMedia is available.
+
+    2. Request Microphone Access
+   
+    - We use the navigator.mediaDevices.getUserMedia method to request access to the user's microphone. This returns a
+    promise that, if resolved, provides a MediaStream object, which contains the audio track from the microphone.
+
+    - This step is crucial because the getUserMedia method allows us to set options like:
+
+      . echoCancellation: Helps reduce the echo in the recording.
+
+      . noiseSuppression: Filters out background noise for clearer audio.
+
+      . sampleRate: Defines the frequency of audio samples. A common value is 44100 Hz (the standard for CDs).
+
+    - These settings can be passed when getting the microphone stream, ensuring better quality audio capture.
+
+    1. Create a MediaRecorder Instance
+   
+   - Once we have the audio stream from the microphone, we create a MediaRecorder instance. The constructor of the
+   MediaRecorder takes in:
+
+   . The audio stream (MediaStream object).
+
+   . MIME type: A format for recording (e.g., audio/webm or audio/ogg). Different formats affect the file size, quality,
+   and compression.
+
+   . Audio bitrate: The audio quality and size. A common value for recording is 64,000 bits per second (64kbps), but this can vary based on the desired quality.
+
+ - MediaRecorder will handle the encoding and recording of the audio.
+
+  1. Handle the Recording Data
+
+  - The MediaRecorder API provides an event, ondataavailable, which is fired whenever data (audio) is available during the
+  recording process. Inside this event handler, we check if event.data.size > 0 to make sure there's actually audio data to
+  save.
+
+  6. Start and Stop Recording
+   
+  - You can use the onstart and onstop events of the MediaRecorder to track when the recording starts and stops. This can
+    be useful for updating UI elements like showing a progress bar, changing the button to "Stop", etc.
+
+    . onstart: Triggered when the recording starts.
+
+    . onstop: Triggered when the recording stops.
+
+  7. Save the Audio
+  - After the recording is stopped, the audio data can be processed (e.g., saved to a file, uploaded to a server, or converted
+  to a different format). This is done by capturing the data chunks from the ondataavailable event.
    
  
   ■ Stop Recording
