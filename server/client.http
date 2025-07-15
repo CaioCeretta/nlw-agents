@@ -30,10 +30,11 @@ GET {{baseUrl}}/rooms/{{roomId}}/questions
 ###
 
 # @name createQuestion
-POST {{baseUrl}}/{{roomId}}/questions
+POST {{baseUrl}}/rooms/c29fcd44-f720-402e-b624-b7d4a8fb2846/questions
 Accept: application/json
 Content-Type: application/json
 
 {
-  "question": "What is the meaning of life"
+  "question": "O que é o react?"
 }
+

@@ -15,6 +15,20 @@
       "when": 1752156686913,
       "tag": "0001_lethal_blonde_phantom",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1752451750130,
+      "tag": "0002_tranquil_random",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1752456468596,
+      "tag": "0003_light_dakota_north",
+      "breakpoints": true
     }
   ]
 }
