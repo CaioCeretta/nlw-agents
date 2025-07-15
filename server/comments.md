@@ -170,34 +170,33 @@ where database://user:password@host:docker_port/dbname
    to be made, are prompts or messages that we will send to the AI, similar to how people interact with ChatGPT.
 
 ● Drizzle ORM
-  . Instead of prisma ORM, this project will use drizzle, they are both very popular, what the instructor likes about it
-  is that it has a similar syntax to SQL, and different from prisma, when using drizzle we still continue using sql
+. Instead of prisma ORM, this project will use drizzle, they are both very popular, what the instructor likes about it
+is that it has a similar syntax to SQL, and different from prisma, when using drizzle we still continue using sql
 
+○ npm install drizzle-orm and drizzle-kit -D, which is the cli for table creations, migrations, etc.
+○ When creating the tables, the only thing we need to be cautious is the import, it must always be from 'drizzle-orm/pg-core
+○ Create an index.ts where we'll create a schema with all the tables within the schema`folder, export it, export it,
+and use it on connection.sql creation
 
-  ○ npm install drizzle-orm and drizzle-kit -D, which is the cli for table creations, migrations, etc.
-  ○ When creating the tables, the only thing we need to be cautious is the import, it must always be from 'drizzle-orm/pg-core
-  ○ Create an index.ts where we'll create a schema with all the tables within the schema`folder, export it, export it,
-  and use it on connection.sql creation
+○ After finishing config, run`npx drizzle-kit generate` on terminal and create a file in the outDir specified, with the
+executed SQL, which we will then execute the npx drizzle-kit migrate to run this sql
+○ Drizzle-kit generate x Drizzle-kit migrate x Drizzle-kit push
+■ Drizzle-kit generate
+□ Generates the .sql migration based on the current schema
+■ Drizzle-kit migrate
+□ Execute the migrations .sql in the database (and updates the db)
+■ Drizzle-kit push
+□ Directly applies the schema on the database, without generating a .sql
 
-  ○ After finishing config, run`npx drizzle-kit generate` on terminal and create a file in the outDir specified, with the
-  executed SQL, which we will then execute the npx drizzle-kit migrate to run this sql
-  ○ Drizzle-kit generate x Drizzle-kit migrate x Drizzle-kit push
-    ■ Drizzle-kit generate
-      □ Generates the .sql migration based on the current schema
-    ■ Drizzle-kit migrate
-      □ Execute the migrations .sql in the database (and updates the db)
-    ■ Drizzle-kit push
-      □ Directly applies the schema on the database, without generating a .sql
+○ When a table has a relationship with other table (via foreign key), when creating our seeds, we can make use of a
+property named `with`, and choose the given table
 
-  ○ When a table has a relationship with other table (via foreign key), when creating our seeds, we can make use of a
-    property named `with`, and choose the given table
-
-  ○ Table insert
+○ Table insert
 
     ■ Table insertions in Drizzle:
 
       1. We define a route, such as a `POST` for the `/rooms` endpoint  (First Parameter)
-      2. 
+      2.
       3. The second parameter is the schema object that we want to modify. This will receive a body object containing the
      data we wish to add, such as name and description — the schema parameter that wraps the body has nothing to do with
      drizzle, but is part of `Fastify`'s configuration route with support to the plugin `fastify-type-provider-zod`, which
@@ -209,7 +208,7 @@ where database://user:password@host:docker_port/dbname
       . Therefore, schema is a known key to fastify as the validation route schema and body defines the request.body
 
       4. The third parameter is the function that will be triggered when the endpoint is accessed. This function receives
-      two parameters:  the request data and the reply object 
+      two parameters:  the request data and the reply object
       5. In the `request.body`, you will find the parameters passed in the body from the previous step (thanks to zod).
       These parameters
         are then used in a db.insertion operation within the `rooms` table, which is part of the schema.
@@ -222,7 +221,6 @@ where database://user:password@host:docker_port/dbname
 
 ○ Finally, execute npx drizzle-kit studio to visualize the database on a browser
 
-
 ○ Install drizzle-seed for creating database seeds.
 ■ When Seeding we usually reset the database before seeding, and drizzle-seed offers us functions to seed and reset.
 ■ Add script in package.json to run it
@@ -231,22 +229,21 @@ where database://user:password@host:docker_port/dbname
 ○ Create a src/http/routes/ folder and inside of it, create all the endpoints we want to be accessed via rest application
 ○ Import FastifyPluginCallbackZod to type routes (e.g. getRoomsRoute). This function receives the `app` instance, register
 the endpoint, and defines a callback that returns the desired response.
-○ We now need to register, inside app in our server.ts, the app the routes we 
+○ We now need to register, inside app in our server.ts, the app the routes we
 ○ By naming a route with # @name anyName, we are able to able to utilize its return inside other queries, like the id of
 a room created (e.g. @roomId = {{createRoom.response.body.$.roomId}})
-  ■ with arrays we use the key after the $.
+■ with arrays we use the key after the $.
 
 ○ Get Routes with params (for example ¨/rooms/:roomId/question¨)
 
-  ■ The first parameter is the end point
-  ■ the second parameter is the schema object, and the roomId as the parameter
-  ■ The third parameter we can get the roomId from the previous step in the request object (thanks to zod)
-  and use it to fetch the specific room in the database.
+■ The first parameter is the end point
+■ the second parameter is the schema object, and the roomId as the parameter
+■ The third parameter we can get the roomId from the previous step in the request object (thanks to zod)
+and use it to fetch the specific room in the database.
 
+● SQL Comments:
 
-● SQL Comments: 
-
-  ○ SQL left join: 
+○ SQL left join:
 
     ```ts
     export const getRoomsRoute: FastifyPluginCallbackZod = (app) => {
@@ -264,46 +261,51 @@ a room created (e.g. @roomId = {{createRoom.response.body.$.roomId}})
           .orderBy(schema.rooms.createdAt);
 
         return results;
-	});
-  ```
+    });
 
-  Using this query as an example
+```
 
-  ■ What we want? 
-    □ Fetch all rooms from the rooms table
-    □ Along with it, to know how many `questions` (from question table), each room has
-    □ Even if a room does not have any question, it should still appear in the result
-    □ That's why we use LEFT JOIN instead of INNER JOIN
+Using this query as an example
 
-  ■ Table Structure
+■ What we want?
+  □ Fetch all rooms from the rooms table
+  □ Along with it, to know how many `questions` (from question table), each room has
+  □ Even if a room does not have any question, it should still appear in the result
+  □ That's why we use LEFT JOIN instead of INNER JOIN
 
-    □ Simplified Table Structure Example
+■ Table Structure
 
-      rooms
-      id: 1  |  name: room 1  | createdAt: 2024-07-01 10:00
-      id: 2  |  name: room 2  | createdAt: 2024-07-01 11:00
-      id: 3  |  name: room 3  | createdAt: 2024-07-01 12:00
+  □ Simplified Table Structure Example
 
-      _____________________________________________________
+    rooms
+    id: 1  |  name: room 1  | createdAt: 2024-07-01 10:00
+    id: 2  |  name: room 2  | createdAt: 2024-07-01 11:00
+    id: 3  |  name: room 3  | createdAt: 2024-07-01 12:00
 
-      questions
+    _____________________________________________________
 
-      id: 1  |  question: What is react?  | answer: null | roomId: 1
-      id: 2  |  question: What is SQL?    | answer: null | roomId: 1
-      id: 3  |  question: What is JSON?   | answer: null | roomId: 2
+    questions
 
-      . Room with the id 3 does't have any question
+    id: 1  |  question: What is react?  | answer: null | roomId: 1
+    id: 2  |  question: What is SQL?    | answer: null | roomId: 1
+    id: 3  |  question: What is JSON?   | answer: null | roomId: 2
 
-  ■ What does this snippet do
+    . Room with the id 3 does't have any question
 
-    □ select(): defines which fields we want in the result
-    □ from(schema.rooms): starts by fetching the rooms
-    □ leftJoin(...): joins with the `questions` table, if present. if not, it will set null
-    □ count(schema.questions.id): Counts how many questions there are per room (even if it's 0)
-    □ groupBy(schema.rooms.id): Groups the results by room, to count correctly
-    □ orderBy(schema.rooms.createdAt): Orders it by room date creation
+■ What does this snippet do
 
- 
+  □ select(): defines which fields we want in the result
+  □ from(schema.rooms): starts by fetching the rooms
+  □ leftJoin(...): joins with the `questions` table, if present. if not, it will set null
+  □ count(schema.questions.id): Counts how many questions there are per room (even if it's 0)
+  □ groupBy(schema.rooms.id): Groups the results by room, to count correctly
+  □ orderBy(schema.rooms.createdAt): Orders it by room date creation
 
-      
+● Create Question
 
+  ○ We created a code on the front end targeting this endpoint `http://localhost:3333/rooms/${roomId}/questions`, the code
+  for it will be:
+
+    ■ Create a new file under http named create-room-question
+
+```

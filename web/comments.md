@@ -116,7 +116,7 @@ deleting resources. In this case, it's used to send form data to the backend whe
 
   ■ One thing the instructor likes to do to keep the code organized, is to create a types folder inside http to share it
   across the application
-  ■ Thus folder also includes the `useQuery`s used to fetch data from the API, where it works similar to a context, where
+  ■ This folder also includes the `useQuery`s used to fetch data from the API, where it works similar to a context, where
   we utilize the use keyword as prefix, such as useRooms for the function that retrieves the db data, where we are able
   to get all the tanstack responses — such as data, isLoading, isError
 
@@ -179,7 +179,10 @@ deleting resources. In this case, it's used to send form data to the backend whe
   as `const { data } = useRoomQuestions(roomId);`
 
 
-○ Create Questions
+
+● Recording Audio and Creating Questions
+
+  ○ Create Questions
 
     ◆ Reminder  About typings:
       . Always look forward to typing requests, responses, any typing. It will help us a lot when coding to know exactly
@@ -188,32 +191,124 @@ deleting resources. In this case, it's used to send form data to the backend whe
   the server API return. 
   ■ We then create the mutation to send the function to the API endpoint, pretty much as the other one.
 
-○ Invalidating Query Keys
+  ○ create-room-audio.tsx
+    ■ Unlike getRooms, the questions are dynamic and depend on the current room. When the room changes, the query must change
+    as well. Therefore, using the same `queryKey` identifier for all of them would cause issues. 
+    ■ Since `reactQuery` has a caching system that runs on memory, it means that if we access a room and fetch the questions
+    made on that room and then accessing other room, and executing the same query again and both of them having the same ID,
+    it will end up showing the questions fetched at the first room, in the second one, because since they have the same ID,
+    the answer is going to be cached.
+    ■ When there is a parameter (or more than one), where want to list the questions, as the queryFn second argument, we
+    also include the parameter into the queryKey value, e.g  `queryKey: ['get-questions', roomId]`. Now id is going to be
+    different for each room
 
-  ■ We have previously seen that when a query key is invalidated, such as in an onSuccess, the queryFn is going to be remade.
+  ○ Invalidating Query Keys
 
-  ■ However, when mutating, we need to be careful because: 
+    ■ We have previously seen that when a query key is invalidated, such as in an onSuccess, the queryFn is going to be remade.
 
-    □ By going into the use-rooms-questions, that is a request, we can notice that we have the roomId inside the query
-    key array
-    □ Different from the rooms key, where we invalidate the rooms fetch to fetch the new list, we now have a parameter
-    □ We receive the roomId as parameter, but is only available on the mutation function, it is not visible within the
-    onSuccess context  
+    ■ However, when mutating, we need to be careful because: 
 
-    One approach we can take to fix this: 
+      □ By going into the use-rooms-questions, that is a request, we can notice that we have the roomId inside the query
+      key array
+      □ Different from the rooms key, where we invalidate the rooms fetch to fetch the new list, we now have a parameter
+      □ We receive the roomId as parameter, but is only available on the mutation function, it is not visible within the
+      onSuccess context  
 
-    □ Before, the CreateQuestionRequest type includes the question and roomId as properties.
+      One approach we can take to fix this: 
 
-    □ After in the CreateQuestionRequest type, instead of defining the roomId as part of the type, we specify that the question
-    will be included and the roomId will be passed as a parameter to useCreateQuestion function
+      □ Before, the CreateQuestionRequest type includes the question and roomId as properties.
 
-    □ By using this approach, roomId is going to be available throughout the entire function, making it accessible for use
-    inside revalidate
+      □ After in the CreateQuestionRequest type, instead of defining the roomId as part of the type, we specify that the question
+      will be included and the roomId will be passed as a parameter to useCreateQuestion function
 
-    □ However, different from the other functions, this will involve us passing the room id when invoking that mutationFn
-    e.g `const { mutateAsync } = useCreateQuestion(roomId)` 
+      □ By using this approach, roomId is going to be available throughout the entire function, making it accessible for use
+      inside revalidate
 
-    □ mutateAsync is not being directly exported anywhere. It is a property returned by the hook useCreateQuestion, which
-    internally, encapsulate the useMutation
+      □ However, different from the other functions, this will involve us passing the room id when invoking that mutationFn
+      e.g `const { mutateAsync } = useCreateQuestion(roomId)` 
+
+      □ mutateAsync is not being directly exported anywhere. It is a property returned by the hook useCreateQuestion, which
+      internally, encapsulate the useMutation
+
+  ○ Question List / Question Item Components
+
+    ■ Question List
+
+      □ Question list will make use of the useRoomQuestions query we have just created. assign to a variable data and
+      iterate over each one and assign the question to a `<QuestionItem>`
+
+      □ In the question parameter, we don't have to send only the specific question attribute, we can pass the whole object
+      since its type is of the expected return
+
+    ■ Question Form
+
+      □ We will create a new function under http, named useCreateQuestion.ts where it will create the room on form submit
+      and redo the query to the rooms as soon as it succeeds
+ 
+○ Recording Audios 
+
+  ■ First of all, we need to make sure that the browser can record audio
+
+  ■ Create a boolean state to track if to set the recording as true or false
+
+  ■ We are going to monitor the audios being recorded in the AudioRecorder page through dev tools network tab
+
+  𥨐 Inside this component, we are going to check if the browser has all the specific permissions, like:
+    □ const isRecordingSupported = !!  navigator.mediaDevices
+      && typeof navigator.mediaDevices.getUserMedia === 'function';
+      && typeof window.MediaRecorder === 'function'
+
+    □ But we'll notice that MediaRecorder will give us an error: `Property 'MediaRecorder' does not exist on type
+    'Navigator'.ts(2339)`
+
+    □ To fix the error above, we need to add @types/dom-speech-recognition for typescript to understand that this MediaRecorder
+    exists in the browser
+
+  ■ Start Recording
+
+    □ We use the recorder  start recording. Recorder is a object of the type MediaRecorder
+
+    □ Break down step by step of the startRecording method
+
+      1. check if the browser supports recording 
+      2. setIsRecording true
+      3. create an audio constant and assign to it the navigator.mediaDevices.getUserMedia return
+      4. This is required because we need to access the user's microphone, this function has one audio property
+      object, which has some properties:
+         . In this property we can add properties related to the recording, such as echoCancellation, noiseSuppression,
+         sample_rate and others
+      5. With the constant "in hands", we are going to start the recording, for it, we'll create a constant recorder that
+      is an instance of the MediaRecorder API (Which is global to he browser). This constructor receives properties like:
+        1. The audio object,
+        2. A mimeType (format that we want to record these audios, each mimeType has different sizes, different compression
+      levels, and other information)
+        3. audioBitsPerSecond - which a common value for this type of recordings is 64_000
+      6. Invoke the method recorder.ondataavailable, that means that when the user recorded an audio and it is available, 
+      we can use this callback, use an event parameter and check if event.data.size > 0
+   
+ 
+  ■ Stop Recording
+  
+    □ On every recording, for it to finish and be persisted, we need to stop it
+
+    □ We are going to create the stopRecording function, however, we will not be able to call the recorder.stop() function,
+    since the function that stops is not the same as the one we create the MediaRecorder instance and we don't have direct
+    access to this same recorder
+
+    □ We can't use a state to the store the recorder since a state is used for storing variables that when their values
+    change, they re-render the component. isRecording have a state because there is a conditional for showing different
+    texts depending on that variable value. If it was a normal variable, not a state, the interface wouldn't be recreated
+    when the value change, and we wouldn't be able to show different button values when the value change.
+
+    □ Recorder, on other hand, we want to store it in a variable that we don't need to keep watching its value, but we
+    also can't create it as a traditional variable, such as a const or let because when the state changes, everything
+    that is inside the component, would go back to its initial state, and we would lose the reference to this recorder.
+    Because of this, when we want to keep a reference for a variable, a hook called useRef
+
+    ○ useRef use explanation
+
+      
+
+
     
 
