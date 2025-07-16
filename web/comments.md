@@ -29,6 +29,7 @@
         ```html
         <input type="text" disabled>
         <!-- 'type' and 'disabled' are attributes -->
+        ```
 
     In summary, we can think of an attribute as a named value associated with an object or element
 
@@ -50,6 +51,7 @@ such as getter and setter that give access to an attribute
             return name
           }
         }
+      ```
 
 ● New TailwindCSS config
 
@@ -245,7 +247,7 @@ deleting resources. In this case, it's used to send form data to the backend whe
       □ We will create a new function under http, named useCreateQuestion.ts where it will create the room on form submit
       and redo the query to the rooms as soon as it succeeds
  
-○ Recording Audios 
+● Recording and Saving audios
 
   ■ First of all, we need to make sure that the browser can record audio
 
@@ -265,19 +267,19 @@ deleting resources. In this case, it's used to send form data to the backend whe
     □ To fix the error above, we need to add @types/dom-speech-recognition for typescript to understand that this MediaRecorder
     exists in the browser
 
-  ■ Start Recording
+  ○ Start Recording
 
     □ We use the recorder  start recording. Recorder is a object of the type MediaRecorder
 
     □ Recording Audio in the Browser: Step-by-Step Guide
 
     1. Check for Browser Compatibility
-   
-       - First, ensure the browser supports recording audio using the MediaRecorder API, which we have already done. The
-       browser must have access to the user's microphone, so we will check if navigator.mediaDevices.getUserMedia is available.
+  
+      - First, ensure the browser supports recording audio using the MediaRecorder API, which we have already done. The
+      browser must have access to the user's microphone, so we will check if navigator.mediaDevices.getUserMedia is available.
 
     2. Request Microphone Access
-   
+  
     - We use the navigator.mediaDevices.getUserMedia method to request access to the user's microphone. This returns a
     promise that, if resolved, provides a MediaStream object, which contains the audio track from the microphone.
 
@@ -291,62 +293,144 @@ deleting resources. In this case, it's used to send form data to the backend whe
 
     - These settings can be passed when getting the microphone stream, ensuring better quality audio capture.
 
-    1. Create a MediaRecorder Instance
-   
-   - Once we have the audio stream from the microphone, we create a MediaRecorder instance. The constructor of the
-   MediaRecorder takes in:
-
-   . The audio stream (MediaStream object).
-
-   . MIME type: A format for recording (e.g., audio/webm or audio/ogg). Different formats affect the file size, quality,
-   and compression.
-
-   . Audio bitrate: The audio quality and size. A common value for recording is 64,000 bits per second (64kbps), but this can vary based on the desired quality.
-
- - MediaRecorder will handle the encoding and recording of the audio.
-
-  1. Handle the Recording Data
-
-  - The MediaRecorder API provides an event, ondataavailable, which is fired whenever data (audio) is available during the
-  recording process. Inside this event handler, we check if event.data.size > 0 to make sure there's actually audio data to
-  save.
-
-  6. Start and Stop Recording
-   
-  - You can use the onstart and onstop events of the MediaRecorder to track when the recording starts and stops. This can
-    be useful for updating UI elements like showing a progress bar, changing the button to "Stop", etc.
-
-    . onstart: Triggered when the recording starts.
-
-    . onstop: Triggered when the recording stops.
-
-  7. Save the Audio
-  - After the recording is stopped, the audio data can be processed (e.g., saved to a file, uploaded to a server, or converted
-  to a different format). This is done by capturing the data chunks from the ondataavailable event.
-   
- 
-  ■ Stop Recording
+    3. Create a MediaRecorder Instance
   
-    □ On every recording, for it to finish and be persisted, we need to stop it
+      - Once we have the audio stream from the microphone, we create a MediaRecorder instance. The constructor of the
+      MediaRecorder takes in:
 
-    □ We are going to create the stopRecording function, however, we will not be able to call the recorder.stop() function,
-    since the function that stops is not the same as the one we create the MediaRecorder instance and we don't have direct
-    access to this same recorder
+      . The audio stream (MediaStream object).
 
-    □ We can't use a state to the store the recorder since a state is used for storing variables that when their values
-    change, they re-render the component. isRecording have a state because there is a conditional for showing different
-    texts depending on that variable value. If it was a normal variable, not a state, the interface wouldn't be recreated
-    when the value change, and we wouldn't be able to show different button values when the value change.
+      . MIME type: A format for recording (e.g., audio/webm or audio/ogg). Different formats affect the file size, quality,
+      and compression.
 
-    □ Recorder, on other hand, we want to store it in a variable that we don't need to keep watching its value, but we
-    also can't create it as a traditional variable, such as a const or let because when the state changes, everything
-    that is inside the component, would go back to its initial state, and we would lose the reference to this recorder.
-    Because of this, when we want to keep a reference for a variable, a hook called useRef
+      . Audio bitrate: The audio quality and size. A common value for recording is 64,000 bits per second (64kbps),
+      but this can vary based on the desired quality.
 
-    ○ useRef use explanation
+      - MediaRecorder will handle the encoding and recording of the audio.
 
+      4. Handle the Recording Data
+
+        - The MediaRecorder API provides an event, ondataavailable, which is fired whenever data (audio) is available
+      during the recording process. Inside this event handler, we check if event.data.size > 0 to make sure there's
+      actually audio data to save.
+
+    5. Start and Stop Recording
+  
+      - You can use the onstart and onstop events of the MediaRecorder to track when the recording starts and stops. This 
+      can be useful for updating UI elements like showing a progress bar, changing the button to "Stop", etc.
+
+        . onstart: Triggered when the recording starts.
+
+        . onstop: Triggered when the recording stops.
+
+    6. Save the Audio
+      - After the recording is stopped, the audio data can be processed (e.g., saved to a file, uploaded to a server, or converted
+    to a different format). This is done by capturing the data chunks from the ondataavailable event.
+
+      7. Start Recording
+  
+      - At the end of file, call recorder.start() to begin the recording
+
+○ Stop Recording
+
+  ■ On every recording, for it to finish and be persisted, we need to stop it
+
+  ■ We are going to create the stopRecording function, however, we will not be able to call the recorder.stop() function,
+  since the function that stops is not the same as the one we create the MediaRecorder instance and we don't have direct
+  access to this same recorder
+
+  ■ We can't use a state to the store the recorder since a state is used for storing variables that when their values
+  change, they re-render the component. isRecording have a state because there is a conditional for showing different
+  texts depending on that variable value. If it was a normal variable, not a state, the interface wouldn't be recreated
+  when the value change, and we wouldn't be able to show different button values when the value change.
+
+  ■ Recorder, on other hand, we want to store it in a variable that we don't need to keep watching its value, but we
+  also can't create it as a traditional variable, such as a const or let because when the state changes, everything
+  that is inside the component, would go back to its initial state, and we would lose the reference to this recorder.
+  Because of this, when we want to keep a reference for a variable, a hook called useRef
+
+○ useRef use explanation 
+
+  ■ What is useRef?
+  useRef is a hook that comes from the `react` library. It provides a way to persist values across renders without causing
+  re-render when updated it. It returns a mutable object with a `.current` property that can hold any value, such as DOM
+  elements or variables. Commonly, `useRef` is used to directly reference DOM elements or to store values that should not
+  trigger re-renders, like previous state values or timers. It is often preferred over useState for cases where a value
+  needs to persist between renders but doesn't need tto trigger a UI update.
+
+  ■ How will it help our recorder code?
+
+    □ We start by assigning this ref to a recorder constant, and this ref is of type <MediaRecorder | null>
+    
+    □ We change the whole start recording to utilize this recorders to this recorder.current
+
+    □ On the onStop we check if there is a recorder.current and its state is inactive, then we stop it.
+
+    □ If know we try to record an audio, on the console.log it will now give us the returned audio blob
+
+○ Converting the blob to a file and send it to our 
+
+  ■ Send this file to the api
+
+    □ To send this file to the API, we have o make an api call for our API after we stop the recording
+
+    □ We are going to create a new uploadAudio function to handle this. As soon as the audio data is available we are going
+    to send the audio, via the start recording function as an argument to this new function
+
+  ○ Create Audio Function
+
+    ■  When we have to send files to the backend, we can't do it via JSON, it doesn't support JSONs, unless we convert it
+    to base64, but the problem with this is that it increases the file size being sent in 10 or 20 percent, which is not
+    desired
+
+    ■ Usually, every time we need to transfer files between the front and the backend, we prefer to use FormData — which is
+    the `application/multipart-formdata`
+      . For this, we are going to declare a `formData` constant and assign a new instance of the FormData class to it.
+
+    ■ We are going to append `("file", audio, "audio.webm")` to the new formData constant, where the first argument is
+    the type, second one is the blob (audio), and the third parameter the name and extension
+
+    ■ Send the request to the api, passing the method as POST and the body as the formData, e.g.
+
+    ```ts
+      await fetch(
+        `http://localhost:3333/rooms/${params.roomId}/audio`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+    ```
+
+    ■ What will this route do?
+
+      □ Transcribe the audio using the Gemini API
+      □ Convert the audio to semantic representation using an embeddings algorithm and persist it on the db
       
 
 
+
+
+
+
     
+
+    
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+    
+
+
+  
 
