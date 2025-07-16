@@ -68,9 +68,7 @@ Use standard import when you're importing anything that will exist at runtime, s
     also using types, except when using --experimental-strip-types for dev runtime
 
     ```ts
-
     import { User, getUser } from './module';
-
     ```
 
 ● Env configuration
@@ -262,50 +260,85 @@ and use it to fetch the specific room in the database.
 
         return results;
     });
-
-```
+    ```
 
 Using this query as an example
 
 ■ What we want?
-  □ Fetch all rooms from the rooms table
-  □ Along with it, to know how many `questions` (from question table), each room has
-  □ Even if a room does not have any question, it should still appear in the result
-  □ That's why we use LEFT JOIN instead of INNER JOIN
+□ Fetch all rooms from the rooms table
+□ Along with it, to know how many `questions` (from question table), each room has
+□ Even if a room does not have any question, it should still appear in the result
+□ That's why we use LEFT JOIN instead of INNER JOIN
 
 ■ Table Structure
 
-  □ Simplified Table Structure Example
+□ Simplified Table Structure Example
 
-    rooms
-    id: 1  |  name: room 1  | createdAt: 2024-07-01 10:00
-    id: 2  |  name: room 2  | createdAt: 2024-07-01 11:00
-    id: 3  |  name: room 3  | createdAt: 2024-07-01 12:00
+rooms
+id: 1 | name: room 1 | createdAt: 2024-07-01 10:00
+id: 2 | name: room 2 | createdAt: 2024-07-01 11:00
+id: 3 | name: room 3 | createdAt: 2024-07-01 12:00
 
-    _____________________________________________________
+---
 
-    questions
+questions
 
-    id: 1  |  question: What is react?  | answer: null | roomId: 1
-    id: 2  |  question: What is SQL?    | answer: null | roomId: 1
-    id: 3  |  question: What is JSON?   | answer: null | roomId: 2
+id: 1 | question: What is react? | answer: null | roomId: 1
+id: 2 | question: What is SQL? | answer: null | roomId: 1
+id: 3 | question: What is JSON? | answer: null | roomId: 2
 
-    . Room with the id 3 does't have any question
+. Room with the id 3 does't have any question
 
 ■ What does this snippet do
 
-  □ select(): defines which fields we want in the result
-  □ from(schema.rooms): starts by fetching the rooms
-  □ leftJoin(...): joins with the `questions` table, if present. if not, it will set null
-  □ count(schema.questions.id): Counts how many questions there are per room (even if it's 0)
-  □ groupBy(schema.rooms.id): Groups the results by room, to count correctly
-  □ orderBy(schema.rooms.createdAt): Orders it by room date creation
+□ select(): defines which fields we want in the result
+□ from(schema.rooms): starts by fetching the rooms
+□ leftJoin(...): joins with the `questions` table, if present. if not, it will set null
+□ count(schema.questions.id): Counts how many questions there are per room (even if it's 0)
+□ groupBy(schema.rooms.id): Groups the results by room, to count correctly
+□ orderBy(schema.rooms.createdAt): Orders it by room date creation
 
-● Create Question
+● Gemini service
 
-  ○ We created a code on the front end targeting this endpoint `http://localhost:3333/rooms/${roomId}/questions`, the code
-  for it will be:
+○ Gemini API
 
-    ■ Create a new file under http named create-room-question
+    ■ For the Gemini code we are going to create a service on src/services/gemini.ts
+    ■ First of all, we need to install gemini sdk — `@google/genai`
+    ■ Import GoogleGenAi from this library and create a new object, passing as argument the apiKey which can be created
+    by going to `aistudio.google.com` and creating one
 
-```
+● Upload File Route
+
+○ This will be a post route with the roomId as a param, and its body won't have a type since it won't receive a JSON, but
+a file
+
+○ To use a file inside Fastify, we need to install the library `@fastify/multipart` which is the plugin that enables
+fastify to understand requests that are sending multipart in its body
+
+○ The route function will assign request.file to a constant named audio, check its existence, and start treating it
+
+■ First, we need to check if the audio exists, because it can be multipart.multipartfile or undefined
+
+■ Now we have to transcribe the audio using Gemini and generate the semantic vector (embeddings). Lastly we are going
+to store the vectors inside the database
+
+○ Audio Chunks table
+
+■ Audio chunks are audio pieces, right now we are just sending the raw audio as a blob, but we are soon going to send
+these audios separate on intervals.
+
+■ For storing these files, we are going to create a new table named audio chunks
+
+    □ This table will consist of:
+
+      1. id
+      2. roomId, which references the id of the room
+      3. transcription - audio transcription,
+      4. embeddings - semantic representation, and since we are using pgvector that has support to vectors, the embeddings
+      typing is going to be a vector
+        4.1. This vector need to have a dimension quantity, which the most common are 768 dimensions, and the more dimensions
+        we have, the more accurate is going to be the proximity.
+        4.2. 768 dimensions mean that this vector have 768 numbers inside of it, and each number represent a characteristic
+        of the given piece of code. Therefore, we are going to be able to compare vectors in a way we can get each of these
+        numbers and see which is similar to which, in other words, a semantic search, not one by text, but by meaning.
+      5. finally a createdAt as the last column
