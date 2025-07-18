@@ -408,9 +408,11 @@ deleting resources. In this case, it's used to send form data to the backend whe
       □ Convert the audio to semantic representation using an embeddings algorithm and persist it on the db
       
 
+      
 
 
 
+ 
 
 
     
