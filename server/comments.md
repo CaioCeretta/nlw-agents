@@ -302,43 +302,161 @@ id: 3 | question: What is JSON? | answer: null | roomId: 2
 
 ○ Gemini API
 
-    ■ For the Gemini code we are going to create a service on src/services/gemini.ts
-    ■ First of all, we need to install gemini sdk — `@google/genai`
-    ■ Import GoogleGenAi from this library and create a new object, passing as argument the apiKey which can be created
-    by going to `aistudio.google.com` and creating one
+  ■ For the Gemini code we are going to create a service on src/services/gemini.ts
+  ■ First of all, we need to install gemini sdk — `@google/genai`
+  ■ Import GoogleGenAi from this library and create a new object, passing as argument the apiKey which can be created by going to `aistudio.google.com` and creating one
+  ■ Define a model constant with the model we'll be using.
 
+  ■ `transcribeAudio` function
+
+    □ This is the function responsible to convert our audio into text
+
+    □ One of the ways to do it is by using geminiApi files, where we would upload a file to the API, upload it, an then
+    convert it.
+
+    □ However, the case above is for bigger files, and since we are going to separate our audio into smaller chunks, we
+    are going to make this by converting to base64, which is a "hash" of the file, and we'll do the following
+
+      1. Create a function named transcribeAudio with the audio as base64 and the mimeType as parameters
+      2. Call gemini.models.generateContent({ model, contents})
+        . contents consist of an array of objects, such as an object with the attribute of text, where we pass instructions
+        for the generation, because it is similar to a prompt 
+        . inlineData object, this object consist of the mimeType and the data, which is the base64audio
+      3, `transcribeAudio` function will return the response.text, if there is no text returned, probably an error occurred
+        during conversion
+
+        once this function is created, we now go back to the route
+      
+ 
 ● Upload File Route
 
-○ This will be a post route with the roomId as a param, and its body won't have a type since it won't receive a JSON, but
-a file
+  ○ This will be a post route with the roomId as a param, and its body won't have a type since it won't receive a JSON, but
+  a file
 
-○ To use a file inside Fastify, we need to install the library `@fastify/multipart` which is the plugin that enables
-fastify to understand requests that are sending multipart in its body
+  ○ To use a file inside Fastify, we need to install the library `@fastify/multipart` which is the plugin that enables
+  fastify to understand requests that are sending multipart in its body
 
-○ The route function will assign request.file to a constant named audio, check its existence, and start treating it
+  ○ The route function will assign request.file to a constant named audio, check its existence, and start treating it
 
-■ First, we need to check if the audio exists, because it can be multipart.multipartfile or undefined
+    ■ First, we need to check if the audio exists, because it can be multipart.multipartfile or undefined
 
-■ Now we have to transcribe the audio using Gemini and generate the semantic vector (embeddings). Lastly we are going
-to store the vectors inside the database
+    ■ Now we have to transcribe the audio using Gemini and generate the semantic vector (embeddings). Lastly we are going
+    to store the vectors inside the database
 
-○ Audio Chunks table
+    ■ Node, by default, always work with strings, and streams are a way for us to consume (upload/download) data little by
+    little. Imagine we are making upload of a file that has 1gb, it does not make sense for us to wait the whole file get to
+    the API for us to start working with the file. Therefore, if we assign the audio.file to a constant, we have a string and
+    we can work with it while it is making the upload. However, we will prefer to accumulate the stream for us to only work
+    with it after it has been fully loaded, since it is a small file
 
-■ Audio chunks are audio pieces, right now we are just sending the raw audio as a blob, but we are soon going to send
-these audios separate on intervals.
+    ■ After creating the function to transpile the audio, after checking if the audio exists we are going to
 
-■ For storing these files, we are going to create a new table named audio chunks
+      1. transform the audio into base 64, for it, we first use audioToBuffer, to retrieve the audio buffer
+      2. when the buffer is ready, we convert it to base64, using audio.toString('base64')
+      3. Assign to a constant the return of the transcribeAudio function, passing te audioAsBase64 and the audio.mimetype
+      4. Theoretically we are going to have the transcription
 
-    □ This table will consist of:
 
-      1. id
-      2. roomId, which references the id of the room
-      3. transcription - audio transcription,
-      4. embeddings - semantic representation, and since we are using pgvector that has support to vectors, the embeddings
-      typing is going to be a vector
-        4.1. This vector need to have a dimension quantity, which the most common are 768 dimensions, and the more dimensions
-        we have, the more accurate is going to be the proximity.
-        4.2. 768 dimensions mean that this vector have 768 numbers inside of it, and each number represent a characteristic
-        of the given piece of code. Therefore, we are going to be able to compare vectors in a way we can get each of these
-        numbers and see which is similar to which, in other words, a semantic search, not one by text, but by meaning.
-      5. finally a createdAt as the last column
+  ○ Audio Chunks table
+
+    ■ Audio chunks are audio pieces, right now we are just sending the raw audio as a blob, but we are soon going to send
+    these audios separate on intervals.
+
+    ■ For storing these files, we are going to create a new table named audio chunks
+
+        □ This table will consist of:
+
+          1. id
+          2. roomId, which references the id of the room
+          3. transcription - audio transcription,
+          4. embeddings - semantic representation, and since we are using pgvector that has support to vectors, the embeddings
+          typing is going to be a vector
+            4.1. This vector need to have a dimension quantity, which the most common are 768 dimensions, and the more dimensions
+            we have, the more accurate is going to be the proximity.
+            4.2. 768 dimensions mean that this vector have 768 numbers inside of it, and each number represent a characteristic
+            of the given piece of code. Therefore, we are going to be able to compare vectors in a way we can get each of these
+            numbers and see which is similar to which, in other words, a semantic search, not one by text, but by meaning.
+          5. finally a createdAt as the last column
+
+  ○ Inserting the audio into `AudioChunks` table
+
+    ■ To insert the audio in the audio chunks, we need to have the embeddings — the semantic representation of the given audio
+    to be transpiled.
+
+      □ First we create the method `gemini.models.embedContent()`
+        . Previously on our code we used the gemini's model: 'gemini-2.5-flash', but for the embeddings, we utilize 
+        ´text-embedding-004', but if it was a production app, there would probably exist a better paid model.
+        . context property with an array of objects, passing the text
+        . config object with a taskType property, which means for which end this embedding will be used, and RETRIEVAL_DOCUMENT
+        is used to make semantic fetches and use this content afterwards for other prompts.
+
+        . check if there is something one the response embeddings index 0 values, throw error, otherwise, return the values
+
+  ○ Back to the uploadRoute
+
+    ■ after transforming the audio to base64 and creating our transcription constant, we define an embeddings constant
+    with its value equal to the return of generateEmbeddings function
+    ■ the embeddings file will consist of an array like [-0.056109883, 0.00013685299, -0.011264085, -0.013184721, ,…],
+    where each value essentially is a similarity parameter
+
+  ○ Insert into the database
+
+    ■ With the embedding generated, we are now going to save our chunk of data into the db
+    ■ After the insert, the result should give us in the response, the chunks persisted, if none is found, it means that
+    there was an error on saving, if there is at least the first index, it means it worked and we simply return the id
+    back to the user
+    ■ By fetching the chunkId on the database we can see that the audio is very similar to what was said on the transcription
+    with the embeddings equal to the chunks generated
+
+  ○ Questions Predictions
+
+    ■ Implementing the beginning of this method
+
+      □ Inside the createQuestion route, we are going to need implementing some additional steps
+
+      □ First, we are going to generate the embeddings for the given question. Because as we have previously seen, embeddings
+      are a way for us to compare the semantic of sentences, and we can only compare embeddings with embeddings. Because
+      if we want to find if there is something on the database that answer this question, both of them must be on the
+      embedding format and using the same algorithm/model
+
+    ■ DB fetch
+
+      □ After generating the embeddings, we need to search in the database, chunks that probably can answer the user question
+
+      □ When trying to find vectors proximity, we use the operator <=>, that means, "if and only if". Since we drizzle-orm
+      library doesn't provide a function for this operator — such as eq — we are going to do it using raw sql, for it, we
+      simply import the sql from drizzle, call that sql<expected return type>`sql command`
+      
+        - On this where command, we use drizzle's library `and` which we pass two commands, and it will evaluate them like
+        as we would use the && operator
+        - the first parameter is simply getting the roomId on the db equal to the provided
+        - the second one will be the raw SQL query, which compares the audioChunks.embeddings column with 
+          embeddingsAsStrings.vector. We define this vector by taking the embeddings, joining them with commas, and
+          then comparing it using <=> with the variable cast as a vector.
+    
+
+
+
+
+    
+
+      
+
+
+
+
+
+
+
+
+
+
+      
+
+
+
+    
+
+
+  
+  
