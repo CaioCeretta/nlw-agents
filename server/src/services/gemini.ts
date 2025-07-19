@@ -65,7 +65,7 @@ export async function generateAnswer(
     INSTRUCTIONS:
     - Use only the information based on the provided context. 
     - If the answer was not found in the context, simply answer that you do not have enough information to answer it. 
-    - Be objective
+    - Be objective 
     - Be polite and professional
     - Cite relevant excerpts concerning the context if appropriate
     - If you are to cite the context, utilize the term "Class Content"
