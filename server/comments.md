@@ -433,7 +433,63 @@ id: 3 | question: What is JSON? | answer: null | roomId: 2
         - the second one will be the raw SQL query, which compares the audioChunks.embeddings column with 
           embeddingsAsStrings.vector. We define this vector by taking the embeddings, joining them with commas, and
           then comparing it using <=> with the variable cast as a vector.
-    
+        - the `and` will require both conditions to be satisfied
+
+        - As seen recently, the audio chunks stored in the database are like [0,0725, 0,800], and so on, when we check if
+        1 - that given value is greater than some value, we ensure that this embedding, has a semantic value near the one
+        of the one of the database, which means that, as closes to 1, the higher the similarity.
+
+        □ DB fetch quick summary
+
+          1 - we get the question and generate its embeddings
+          2 - transform them into a string, by joining with commas
+          3 - on the db select we get the id, the transcription, and create a pseudo similarity column that will show how
+          close the embedding from the database is to the ones of the question
+          4 - on the sql query, check if the embeddings comparison is grater the 0,7. Which means that they are similar
+          but not strictly similar 
+          5 - order by similarity
+          6 - limiting by 3,  ensures that we get the closest values
+
+    ■ Generate an answer based on a given question 
+
+      □ We need to first need to find an answer based on the transcription
+      □ Inside Gemini service, we are going to create a generate answer function
+      □ This function receive as parameters, a question and the transcriptions
+        - We are going to join each transcription returned by the database, and add to each one of them 2 line breaks and
+        assign to a context variable
+
+        - create a prompt constant that will have the following:
+          1. Basic instructions for the answer, such as the language
+          2. pass down the context constant we've just created for the API get the transcription and can create answers properly
+          3. pass down the question, for it to know what must be answered
+          4. instructions, divided by '\n -' where we are going to tell how the AI must answer it, the type of language it
+          must use, how we want the answer is given, and how to act if there is no answer based on the context
+
+      □ call the gemini.models.generateContent passing the model, and a contents property, which is an array
+      with an object with a text attribute which will hold the prompt
+
+      □ then, we check if the AI returned an answer, if not, throw and error and we return the response.text
+
+      □ the answer created by the AI is based on the 3 embeddings most similar to the question made.
+
+    ■ Back to createQuestion route
+
+      □ Within this method, we made the db fetch based on the question and the embeddings, and now, with the function we've
+      just created, we are going to generate the answer
+
+      □ first we define a let answer variable
+
+      □ Then, iterate over the chunks, and assign them to a answer constant that is going to be passed to `generateAnswer`
+
+      □ Generate answer receives the question made, and the transcriptions
+      
+      □ The question made is going to be inserted into schema.questions, along the roomId, question, and answer
+
+      □  If an error occurred during the question insertion, it returns an error, otherwise, it returns back to the user
+      an object with the insertedQuestion.id and the answer
+
+       
+
 
 
 
