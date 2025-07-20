@@ -368,7 +368,7 @@ deleting resources. In this case, it's used to send form data to the backend whe
 
     □ If know we try to record an audio, on the console.log it will now give us the returned audio blob
 
-○ Converting the blob to a file and send it to our 
+○ Converting the blob to a file and send it to our API
 
   ■ Send this file to the api
 
@@ -406,7 +406,70 @@ deleting resources. In this case, it's used to send form data to the backend whe
 
       □ Transcribe the audio using the Gemini API
       □ Convert the audio to semantic representation using an embeddings algorithm and persist it on the db
+  
+  ● Final touches
+
+    ○ When creating a question via form, the answer isn't shown on the screen
+
+      ■ Whenever we make a question and send, it shows the question and the answer is a spinning circle and the text of
+      waiting AI to generate the answer
+
+        □ To fix this, inside the question form, we assign a isSubmitting check from RHF, and disable all inputs and buttons
+      while it is still submitting
+
+        □ However, we want that, as soon as the answer is generated, for it to show the answer
+
+      ■ Instead of invalidating that query onSuccess, as we are doing, we change the strategy
+
+        □ onMutate
+
+        . Within useCreateQuestion, we are going to add a new onMutate before onSuccess, onMutate executes on the moment
+        the API call is being made (i.e. in the moment we create to generate a new question, this will call the useCreateQuestion
+        function and the onMutate starts running)
+
+        . When calling onMutate, we receive on the parameters, the data of the implementation, therefore, the question been
+        created by the user 
+
+        . We assigned to queryClient the result of the useQueryClient() hook, that holds the query cache of our whole application,
+          and the queryClient have access to the setQueryData property
+          - This property allows us to update the value of another query, an information that already came previously to\
+          the api, with a new value.
+          - When the user click on `send question` button, we want to add it within the listing, even if it hasn't already
+          been sent and saved on the database. This is called optimal interface.
+          - Optimal interface is about showing to the user that his information was registered and is being processed, even
+          if it still hadn't happen. In case an error occurs, we rollback.
+          
+        . We assign to a questions constant the result of queryClient.queryData(key), where the key is from a query that
+          has been made and we want to retrieve the cached value, on this case 
+          queryClient.getQueryData(['get-questions'], roomId) and now we have access to all fetched questions
+
+        . We must type the `questions` the same way we type the response on the useQuery for ts to know what this questions
+          hold
+
+        . Using `setQueryData` we are going to update the value of this cached query, in the first parameter, we use the
+        same array as we used as the queryKey, and as the second parameter we pass an array, with the purpose of the new
+        created question being inserted at the top of the list. This will require the second parameter to be an array with
+        the following:
+
+        - First, we check if there are questions on the cached questions array.
+        
+          - This is done by const questionsArray = questions ?? []; < It will assign questions if it exists, otherwise, an empty array
+
+          - Then, on the setQueryData, it will simply be an array with the first index being an object with the new value and
+        as the second one, the questionsArray. 
+
+
+
+
+
+
+
       
+
+
+
+    
+
 
       
 
