@@ -484,8 +484,17 @@ deleting resources. In this case, it's used to send form data to the backend whe
 
           . The variable data is the return of the mutation (e.g. CreateQuestionsResponse) 
           
-          . If it succeeded, call the setQueryData, and as the second parameter 
+          . Call the setQueryData, and as the second parameter, and follow these steps
 
+            1 - Check if there is something on the questions array
+              . Even though we are not getting questions from the context or the data, it is coming directly from the
+              query with the id 'get-questions' that has been cached
+
+            2. See if on the context returned by onMutate, there is a newQuestion
+  
+            3. Iterate over the questions and see if there is one with the question.id === newQuestion.id, if there is,
+            return an object placing the new question on the top
+            
         □ onError
 
           . If there was a problem in the insertion, we will go back as it was previously
