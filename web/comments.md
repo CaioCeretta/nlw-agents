@@ -421,81 +421,73 @@ deleting resources. In this case, it's used to send form data to the backend whe
 
       ■ Instead of invalidating that query onSuccess, as we are doing, we change the strategy
 
+        □ Context / Mutation lifecycle
+
+          the context inside the onError and onSuccess, refers to the value returned from the onMutate function
+
+          in simple terms
+
+          1. onMutate(variables) — runs before the mutation function; used for optimistic updates, etc
+          2. mutationFn(variables) — actual function that performs the mutation
+          3. onError(error, variables, context) — runs if the mutation fails
+          4. onSuccess(error, variables, context) — runs if the mutation succeeds
+          5. onSettled(data, error, variables, context) — runs after whether success or error
+
+          Therefore, whatever we return from onMutate is passed as the context parameter to onError.
+
+          It's used to hold temporary or rollback data — commonly used in optimistic updates
+
+
+
         □ onMutate
 
-        . Within useCreateQuestion, we are going to add a new onMutate before onSuccess, onMutate executes on the moment
-        the API call is being made (i.e. in the moment we create to generate a new question, this will call the useCreateQuestion
-        function and the onMutate starts running)
+          . Within useCreateQuestion, we are going to add a new onMutate before onSuccess, onMutate executes on the moment
+          the API call is being made (i.e. in the moment we create to generate a new question, this will call the useCreateQuestion
+          function and the onMutate starts running)
 
-        . When calling onMutate, we receive on the parameters, the data of the implementation, therefore, the question been
-        created by the user 
+          . When calling onMutate, we receive on the parameters, the data of the implementation, therefore, the question been
+          created by the user 
 
-        . We assigned to queryClient the result of the useQueryClient() hook, that holds the query cache of our whole application,
-          and the queryClient have access to the setQueryData property
-          - This property allows us to update the value of another query, an information that already came previously to\
-          the api, with a new value.
-          - When the user click on `send question` button, we want to add it within the listing, even if it hasn't already
-          been sent and saved on the database. This is called optimal interface.
-          - Optimal interface is about showing to the user that his information was registered and is being processed, even
-          if it still hadn't happen. In case an error occurs, we rollback.
+          . We assigned to queryClient the result of the useQueryClient() hook, that holds the query cache of our whole application,
+            and the queryClient have access to the setQueryData property
+            - This property allows us to update the value of another query, an information that already came previously to\
+            the api, with a new value.
+            - When the user click on `send question` button, we want to add it within the listing, even if it hasn't already
+            been sent and saved on the database. This is called optimal interface.
+            - Optimal interface is about showing to the user that his information was registered and is being processed, even
+            if it still hadn't happen. In case an error occurs, we rollback.
+            
+          . We assign to a questions constant the result of queryClient.queryData(key), where the key is from a query that
+            has been made and we want to retrieve the cached value, on this case 
+            queryClient.getQueryData(['get-questions'], roomId) and now we have access to all fetched questions
+
+          . We must type the `questions` the same way we type the response on the useQuery for ts to know what this questions
+            hold
+
+          . Using `setQueryData` we are going to update the value of this cached query, in the first parameter, we use the
+          same array as we used as the queryKey, and as the second parameter we pass an array, with the purpose of the new
+          created question being inserted at the top of the list. This will require the second parameter to be an array with
+          the following:
+
+            - First, we check if there are questions on the cached questions array.
+            
+              - This is done by const questionsArray = questions ?? []; < It will assign questions if it exists, otherwise, an empty array
+
+              - Then, on the setQueryData, it will simply be an array with the first index being an object with the new value and as the second one, the questionsArray. 
+
+          . Now, if we add click on "send question" on the form, it will be instantly added to the top of the list, even if
+          is still generating the answer. But as soon as we refresh, the answer will be there
+
+          . Then, we assign this newQuestion to a new constant, and return an object with the newQuestion and the questions
+
+        □ onSuccess
+
+          . The variable data is the return of the mutation (e.g. CreateQuestionsResponse) 
           
-        . We assign to a questions constant the result of queryClient.queryData(key), where the key is from a query that
-          has been made and we want to retrieve the cached value, on this case 
-          queryClient.getQueryData(['get-questions'], roomId) and now we have access to all fetched questions
+          . If it succeeded, call the setQueryData, and as the second parameter 
 
-        . We must type the `questions` the same way we type the response on the useQuery for ts to know what this questions
-          hold
+        □ onError
 
-        . Using `setQueryData` we are going to update the value of this cached query, in the first parameter, we use the
-        same array as we used as the queryKey, and as the second parameter we pass an array, with the purpose of the new
-        created question being inserted at the top of the list. This will require the second parameter to be an array with
-        the following:
+          . If there was a problem in the insertion, we will go back as it was previously
 
-        - First, we check if there are questions on the cached questions array.
-        
-          - This is done by const questionsArray = questions ?? []; < It will assign questions if it exists, otherwise, an empty array
-
-          - Then, on the setQueryData, it will simply be an array with the first index being an object with the new value and
-        as the second one, the questionsArray. 
-
-
-
-
-
-
-
-      
-
-
-
-    
-
-
-      
-
-
-
- 
-
-
-    
-
-    
-
-
-
-
-
-
-
-
-
-  
-
-  
-
-    
-
-
-  
-
+          . Check if there is a questions variable on the context, if yes, go back to how it was before
