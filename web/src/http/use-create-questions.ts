@@ -33,23 +33,57 @@ export function useCreateQuestion(roomId: string) {
 
       const questionsArray = questions ?? [];
 
+      const newQuestion = {
+        id: crypto.randomUUID(),
+        question,
+        answer: null,
+        createdAt: new Date().toISOString(),
+      };
+
       queryClient.setQueryData<GetRoomQuestionsResponse>(
         ['get-questions', roomId],
-        [
-          {
-            id: crypto.randomUUID(),
-            question,
-            answer: null,
-            createdAt: new Date().toISOString(),
-          },
-          ...questionsArray,
-        ]
+        [newQuestion, ...questionsArray]
       );
+
+      return { newQuestion, questions };
     },
 
-    onSuccess(data, variables, context) {},
+    onSuccess(data, _variables, context) {
+      if (context?.questions) {
+        queryClient.setQueryData<GetRoomQuestionsResponse>(
+          ['get-questions', roomId],
+          (questions) => {
+            if (!questions) {
+              return questions;
+            }
 
-    onError() {},
+            if (!context.newQuestion) {
+              return questions;
+            }
+
+            return questions.map((question) => {
+              if (question.id === context.newQuestion.id) {
+                return {
+                  ...context.newQuestion,
+                  id: data.questionId,
+                  answer: data.answer,
+                };
+              }
+              return question;
+            });
+          }
+        );
+      }
+    },
+
+    onError(_error, _variables, context) {
+      if (context?.questions) {
+        queryClient.setQueryData<GetRoomQuestionsResponse>(
+          ['get-questions', roomId],
+          context.questions
+        );
+      }
+    },
 
     // onSuccess: () => {
     //   queryClient.invalidateQueries({ queryKey: ['get-questions', roomId] });
