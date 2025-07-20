@@ -33,61 +33,26 @@ export function useCreateQuestion(roomId: string) {
 
       const questionsArray = questions ?? [];
 
-      const newQuestion = {
-        id: crypto.randomUUID(),
-        question,
-        answer: null,
-        createdAt: new Date().toISOString(),
-        isGeneratingAnswer: true,
-      };
-
       queryClient.setQueryData<GetRoomQuestionsResponse>(
         ['get-questions', roomId],
-        [newQuestion, ...questionsArray]
-      );
-
-      return { newQuestion, questions };
-    },
-
-    onSuccess(data, _variables, context) {
-      queryClient.setQueryData<GetRoomQuestionsResponse>(
-        ['get-questions', roomId],
-        (questions) => {
-          if (!questions) {
-            return questions;
-          }
-
-          if (!context.newQuestion) {
-            return questions;
-          }
-
-          return questions.map((question) => {
-            if (question.id === context.newQuestion.id) {
-              return {
-                ...context.newQuestion,
-                id: data.questionId,
-                answer: data.answer,
-                isGeneratingAnswer: false,
-              };
-            }
-
-            return question;
-          });
-        }
+        [
+          {
+            id: crypto.randomUUID(),
+            question,
+            answer: null,
+            createdAt: new Date().toISOString(),
+          },
+          ...questionsArray,
+        ]
       );
     },
 
-    onError(_error, _variables, context) {
-      if (context?.questions) {
-        queryClient.setQueryData<GetRoomQuestionsResponse>(
-          ['get-questions', roomId],
-          context.questions
-        );
-      }
-    },
+    onSuccess(data, variables, context) {},
+
+    onError() {},
 
     // onSuccess: () => {
-    //   queryClient.invalidateQueries({ queryKey: ['get-questions', roomId] })
+    //   queryClient.invalidateQueries({ queryKey: ['get-questions', roomId] });
     // },
   });
 }
