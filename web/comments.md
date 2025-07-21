@@ -500,3 +500,41 @@ deleting resources. In this case, it's used to send form data to the backend whe
           . If there was a problem in the insertion, we will go back as it was previously
 
           . Check if there is a questions variable on the context, if yes, go back to how it was before
+
+        □ New approach problem
+
+          . If we send an answer that do not have an answer on the class content, it will keep trying to generate the answer
+          because it won't find any, so to avoid this behavior, we will need to make changes.
+
+            1. Change GetRoomQuestionsResponse type, adding a new property of isGeneratingAnswer?: boolean, to check if
+            the answer is still being generated
+
+            2. Within useCreateQuestion onMutate, add the new property to newQuestion object and to the onSuccess question
+            map as false
+
+            3. Inside QuestionItem component, add this property to the Question interface as a boolean, and on the code
+            change the logic to only show isGeneratingAnswer if there is no answer and it is still generating answer
+
+
+  ○ Greater control on the audio recording
+
+    ■ Instead of generating only one audio, we are going to send audios to the database for each 10 seconds
+
+      □ Within RecordRoomAudio component, create a intervalRef equal to a NodeJS timeout or null
+
+        . At the end, after the recorder.current.start,  assign an interval of five seconds to the intervalRef.current.
+
+        seconds it will have the same typing as the ref
+
+        . This interval will call the recorder.current.stop each five seconds 
+
+        . Move everything inside the start that uses the recorder ref to a new createRecorder function.
+
+        . At the end of startRecording function, pass the audio to the new function
+
+        . At the end of the interval, after stopping it, initialize it again with the same audio constant
+        
+        . Since with the browser recorder we can't stop the audio without saving, this was the approach we took
+
+        . When the user make the manual stop, onclick, we need to clear the interval otherwise it would keep on running.
+            
