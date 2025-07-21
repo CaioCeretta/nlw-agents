@@ -14,10 +14,10 @@ const isRecordingSupported =
   typeof window.MediaRecorder === "function";
 
 export const RecordRoomAudio = () => {
+  const params = useParams<RoomParams>();
   const [isRecording, setIsRecording] = useState(false);
   const recorder = useRef<MediaRecorder | null>(null);
-
-  const params = useParams<RoomParams>();
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   if (!params.roomId) {
     return <Navigate replace to="/" />;
@@ -48,6 +48,33 @@ export const RecordRoomAudio = () => {
     if (recorder.current && recorder.current.state !== "inactive") {
       recorder.current.stop();
     }
+
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+  }
+
+  function createRecorder(audio: MediaStream) {
+    recorder.current = new MediaRecorder(audio, {
+      mimeType: "audio/webm",
+      audioBitsPerSecond: 64_000,
+    });
+
+    recorder.current.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        uploadAudio(event.data);
+      }
+    };
+
+    recorder.current.onstart = () => {
+      console.log("Initiated Recording");
+    };
+
+    recorder.current.onstop = () => {
+      console.log("Finished Recording");
+    };
+
+    recorder.current.start();
   }
 
   async function startRecording() {
@@ -66,26 +93,13 @@ export const RecordRoomAudio = () => {
         },
       });
 
-      recorder.current = new MediaRecorder(audio, {
-        mimeType: "audio/webm",
-        audioBitsPerSecond: 64_000,
-      });
+      createRecorder(audio);
 
-      recorder.current.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          uploadAudio(event.data);
-        }
-      };
+      intervalRef.current = setInterval(() => {
+        recorder.current?.stop();
 
-      recorder.current.onstart = () => {
-        console.log("Initiated Recording");
-      };
-
-      recorder.current.onstop = () => {
-        console.log("Finished Recording");
-      };
-
-      recorder.current.start();
+        createRecorder(audio);
+      }, 5000);
     } catch (error) {
       console.error("Error while starting recording:", error);
     }
